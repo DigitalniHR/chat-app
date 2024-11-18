@@ -4,9 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Previous styles remain the same, add these new styles: */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin: 8px 0;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            animation: fadeIn 0.3s;
+            line-height: 1.4;
+        }
+
+        .user {
+            background: #0084ff;
+            color: white;
+            margin-left: auto;
+        }
+
+        .assistant {
+            background: #f0f0f0;
+            color: black;
+            margin-right: auto;
+        }
 
         .input-container {
             padding: 15px;
@@ -17,167 +55,99 @@
             align-items: center;
         }
 
-        #attach-button {
+        #user-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 15px;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: #0084ff;
+        }
+
+        #send-button {
             background: none;
             border: none;
-            padding: 8px;
+            padding: 8px 16px;
             cursor: pointer;
+            font-size: 15px;
             color: #0084ff;
-            font-size: 20px;
         }
 
-        #attach-button:hover {
+        #send-button:hover {
             background: #f5f5f5;
+            border-radius: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing {
+            display: inline-flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        .typing span {
+            width: 6px;
+            height: 6px;
+            background: #888;
             border-radius: 50%;
+            animation: blink 1.4s infinite;
         }
 
-        #file-input {
-            display: none;
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
         }
 
-        .preview-container {
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-top: 1px solid #eee;
-            display: none;
-        }
-
-        .preview-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .preview-image {
-            max-height: 100px;
-            border-radius: 8px;
-        }
-
-        .preview-info {
-            flex: 1;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .remove-file {
+        .error {
             color: #ff4444;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .remove-file:hover {
-            background: #f5f5f5;
-            border-radius: 50%;
+            padding: 10px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div id="messages"></div>
-    <div class="preview-container" id="preview-container">
-        <div class="preview-content">
-            <img class="preview-image" id="preview-image">
-            <div class="preview-info" id="preview-info"></div>
-            <i class="fas fa-times remove-file" onclick="removeFile()"></i>
-        </div>
-    </div>
     <div class="input-container">
-        <button id="attach-button">
-            <i class="fas fa-paperclip"></i>
-        </button>
-        <input type="file" id="file-input" accept="image/*,.pdf,.txt">
         <input type="text" id="user-input" placeholder="Type a message...">
         <button id="send-button">Send</button>
     </div>
 
     <script>
-        // Previous script content remains, add these new functions:
-        
-        const attachButton = document.getElementById('attach-button');
-        const fileInput = document.getElementById('file-input');
-        const previewContainer = document.getElementById('preview-container');
-        const previewImage = document.getElementById('preview-image');
-        const previewInfo = document.getElementById('preview-info');
-        let currentFile = null;
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiKey = urlParams.get('key');
+        let messages = [];
 
-        attachButton.addEventListener('click', () => fileInput.click());
+        // Debug log
+        console.log('Script loaded');
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            currentFile = file;
-            previewContainer.style.display = 'block';
-            previewInfo.textContent = file.name;
-
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    previewImage.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                previewImage.style.display = 'none';
-            }
-        });
-
-        function removeFile() {
-            currentFile = null;
-            fileInput.value = '';
-            previewContainer.style.display = 'none';
-        }
-
-        async function processFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    if (file.type.startsWith('image/')) {
-                        resolve({
-                            type: 'image',
-                            content: e.target.result.split(',')[1],
-                            format: file.type
-                        });
-                    } else {
-                        resolve({
-                            type: 'text',
-                            content: e.target.result,
-                            format: file.type
-                        });
-                    }
-                };
-                reader.onerror = () => reject(new Error('File reading failed'));
-
-                if (file.type.startsWith('image/')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
-            });
-        }
-
-        // Update sendMessage function to handle files:
         async function sendMessage() {
+            console.log('sendMessage called'); // Debug log
             const content = input.value.trim();
-            if (!content && !currentFile) return;
+            if (!content) return;
 
-            addMessage('user', content + (currentFile ? ` [Attached: ${currentFile.name}]` : ''));
-            let messageContent = content;
-            let processedFile = null;
+            console.log('Content:', content); // Debug log
 
-            if (currentFile) {
-                try {
-                    processedFile = await processFile(currentFile);
-                    if (processedFile.type === 'text') {
-                        messageContent += `\n\nFile contents:\n${processedFile.content}`;
-                    }
-                } catch (error) {
-                    console.error('File processing error:', error);
-                }
-            }
-
-            // Clear input and file
+            // Add user message
+            addMessage('user', content);
+            messages.push({ role: 'user', content });
             input.value = '';
-            removeFile();
 
             // Show typing indicator
             const typingDiv = document.createElement('div');
@@ -187,25 +157,7 @@
             scrollToBottom();
 
             try {
-                let apiMessages = [...messages];
-                
-                if (processedFile && processedFile.type === 'image') {
-                    apiMessages.push({
-                        role: 'user',
-                        content: [
-                            { type: "text", text: messageContent },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: `data:${processedFile.format};base64,${processedFile.content}`
-                                }
-                            }
-                        ]
-                    });
-                } else {
-                    apiMessages.push({ role: 'user', content: messageContent });
-                }
-
+                console.log('Making API call...'); // Debug log
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -213,10 +165,12 @@
                         'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
-                        model: processedFile?.type === 'image' ? 'gpt-4-vision-preview' : 'gpt-4-0125-preview',
-                        messages: apiMessages
+                        model: 'gpt-4o-mini',
+                        messages: messages
                     })
                 });
+
+                console.log('Response received:', response.status); // Debug log
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -227,13 +181,47 @@
                 const assistantMessage = data.choices[0].message.content;
                 messages.push({ role: 'assistant', content: assistantMessage });
                 
+                // Remove typing indicator and add response
                 typingDiv.remove();
                 addMessage('assistant', assistantMessage);
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error details:', error); // Debug log
                 typingDiv.remove();
                 addMessage('assistant', 'Sorry, there was an error: ' + error.message);
             }
+        }
+
+        function addMessage(role, content) {
+            console.log('Adding message:', role, content); // Debug log
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.textContent = content;
+            messagesDiv.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Event Listeners
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        // Initial check for API key
+        if (!apiKey) {
+            const div = document.createElement('div');
+            div.className = 'message assistant';
+            div.textContent = 'Please add your API key to the URL: ?key=your-api-key';
+            messagesDiv.appendChild(div);
+        } else {
+            console.log('API Key present'); // Debug log
         }
     </script>
 </body>

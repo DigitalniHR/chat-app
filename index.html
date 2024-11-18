@@ -5,76 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with GPT-4</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f0f2f5;
-        }
-
-        #chat-container {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-        }
-
-        .user-message {
-            background-color: #0084ff;
-            color: white;
-            margin-left: auto;
-        }
-
-        .assistant-message {
-            background-color: #e4e6eb;
-            color: black;
-        }
-
-        #input-container {
-            display: flex;
-            gap: 10px;
-        }
-
-        #user-input {
-            flex: 1;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            font-size: 16px;
-        }
-
-        #send-button {
-            padding: 15px 30px;
-            background-color: #0084ff;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        #send-button:disabled {
-            background-color: #cccccc;
-        }
-
-        .loading {
-            display: none;
-            color: #666;
-            font-style: italic;
-            margin: 10px 0;
-        }
+        /* ... (keep existing styles) ... */
     </style>
 </head>
 <body>
@@ -86,9 +17,13 @@
     </div>
 
     <script>
-        // Get API key from meta tag that will be injected by GitHub Actions
-        const metaTag = document.querySelector('meta[name="api-key"]');
-        const OPENAI_API_KEY = metaTag ? metaTag.content : null;
+        // This line will be replaced by GitHub Actions
+        const OPENAI_API_KEY = null;
+
+        if (!OPENAI_API_KEY) {
+            document.body.innerHTML = '<div style="color: red; padding: 20px;">Error: API key not configured correctly.</div>';
+            throw new Error('API key not configured');
+        }
 
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
@@ -101,17 +36,16 @@
             const userMessage = userInput.value.trim();
             if (!userMessage) return;
 
-            // Display user message
             addMessage('user', userMessage);
             userInput.value = '';
             userInput.disabled = true;
             sendButton.disabled = true;
             loadingIndicator.style.display = 'block';
 
-            // Add to messages array
             messages.push({ role: 'user', content: userMessage });
 
             try {
+                console.log('Sending request...'); // Debug log
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -134,7 +68,7 @@
                 messages.push({ role: 'assistant', content: assistantMessage });
                 addMessage('assistant', assistantMessage);
             } catch (error) {
-                addMessage('assistant', 'Sorry, there was an error: ' + error.message);
+                addMessage('assistant', 'Error: ' + error.message);
                 console.error('Error:', error);
             }
 

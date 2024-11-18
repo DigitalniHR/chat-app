@@ -11,9 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: Insert API Key
+      - name: Update API Key
         run: |
-          sed -i '5i\    <meta name="api-key" content="${{ secrets.OPENAI_API_KEY }}">' index.html
+          echo "Replacing API key placeholder..."
+          sed -i "s/const OPENAI_API_KEY = null;/const OPENAI_API_KEY = '${{ secrets.OPENAI_API_KEY }}';/" index.html
           
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
